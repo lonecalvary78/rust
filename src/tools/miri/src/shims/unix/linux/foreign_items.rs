@@ -11,7 +11,7 @@ use shims::unix::linux::mem::EvalContextExt as _;
 use shims::unix::linux::sync::futex;
 
 pub fn is_dyn_sym(name: &str) -> bool {
-    matches!(name, "getrandom" | "statx")
+    matches!(name, "statx")
 }
 
 impl<'mir, 'tcx: 'mir> EvalContextExt<'mir, 'tcx> for crate::MiriInterpCx<'mir, 'tcx> {}
@@ -73,18 +73,6 @@ pub trait EvalContextExt<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
             }
 
             // Threading
-            "pthread_condattr_setclock" => {
-                let [attr, clock_id] =
-                    this.check_shim(abi, Abi::C { unwind: false }, link_name, args)?;
-                let result = this.pthread_condattr_setclock(attr, clock_id)?;
-                this.write_scalar(result, dest)?;
-            }
-            "pthread_condattr_getclock" => {
-                let [attr, clock_id] =
-                    this.check_shim(abi, Abi::C { unwind: false }, link_name, args)?;
-                let result = this.pthread_condattr_getclock(attr, clock_id)?;
-                this.write_scalar(result, dest)?;
-            }
             "pthread_setname_np" => {
                 let [thread, name] =
                     this.check_shim(abi, Abi::C { unwind: false }, link_name, args)?;
@@ -152,11 +140,6 @@ pub trait EvalContextExt<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
             }
 
             // Miscellaneous
-            "getrandom" => {
-                let [ptr, len, flags] =
-                    this.check_shim(abi, Abi::C { unwind: false }, link_name, args)?;
-                getrandom(this, ptr, len, flags, dest)?;
-            }
             "mmap64" => {
                 let [addr, length, prot, flags, fd, offset] =
                     this.check_shim(abi, Abi::C { unwind: false }, link_name, args)?;
